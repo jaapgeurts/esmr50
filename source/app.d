@@ -50,7 +50,7 @@ enum ParseState {
     CRC
 }
 
-void main() {
+int main() {
 
     writeln("COSEM Smart meter decoder");
     writeln("©2022 Jaap Geurts");
@@ -65,8 +65,11 @@ void main() {
         //string telegram = readText("esmr50telegram.txt");
         string telegram = readline(serialPort);
         auto parseTree1 = IEC62056(telegram);
-//        writeln(telegram);
-//        writeln(parseTree1);
+        if (!parseTree1.successful) {
+            writeln(telegram);
+            writeln(parseTree1);
+            break;
+        }
 
         float totalPower;
         int currentPower;
@@ -83,6 +86,8 @@ void main() {
         SysTime currentTime = Clock.currTime();
         writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
     }
+    serialPort.close();
+    return 1;
 }
 
 private string readline(DSerial serial) {
