@@ -2,13 +2,7 @@
 docs.json
 __dummy.html
 docs/
-/calgen
-calgen.so
-calgen.dylib
-calgen.dll
-calgen.a
-calgen.lib
-calgen-test-*
+esmr50
 *.exe
 *.o
 *.obj

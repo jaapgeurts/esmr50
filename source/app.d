@@ -91,6 +91,10 @@ private string readline(DSerial serial) {
         if (c == '!')
             break;
     }
+    for(int i=0;i<6;i++) {
+        serial.read(c);
+        strBuilder.put(c);
+    }
     return strBuilder.data;
 }
 
