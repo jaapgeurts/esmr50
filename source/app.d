@@ -55,7 +55,7 @@ void main() {
     writeln("©2022 Jaap Geurts");
 
     DSerial serialPort = new DSerial(ttyName, 115200);
-    serialPort.setBlockingMode(DSerial.BlockingMode.TimedImmediately);
+    serialPort.setBlockingMode(DSerial.BlockingMode.Blocking);
     serialPort.setTimeout(200); // 200 millis
     serialPort.open();
 
