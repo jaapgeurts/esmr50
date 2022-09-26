@@ -16,8 +16,11 @@ IEC62056:
     profilegeneric  <- numvalues lparen obis rparen
     textmessage     <- lparen (!rparen .)* rparen
 # A-B:C.D.E 
-    obis            <-  ~(digit digit?) :'-' ~(digit digit? digit?) :':'
-                        ~(digit digit? digit?) :'.' ~(digit digit? digit?) :'.' ~(digit digit? digit?)
+    obis            <~  digit digit?
+                        '-' digit digit? digit?
+                        ':' digit digit? digit?
+                        '.' digit digit? digit?
+                        '.' digit digit? digit?
     measurement     <- lparen value :'*' unit rparen
     timestamp       <- lparen datetime rparen
     numvalues       <- lparen ~(digit digit?) rparen

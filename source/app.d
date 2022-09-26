@@ -1,9 +1,13 @@
 import std.stdio;
 import std.conv;
+import std.array;
+
+import std.file : readText;
+
+import dserial;
 
 import iec62056;
 
-import std.file : readText;
 /* 
  * Description: Application to read ESMR-5 messages from smart energy meter
  *
@@ -26,7 +30,6 @@ import std.file : readText;
 - The F group separates the results partly defined by groups A to E. The typical usage is the specification of individual time ranges.
 */
 
-
 struct OBIS {
     int medium;
     int channel;
@@ -36,20 +39,59 @@ struct OBIS {
     int separate;
 }
 
-string serial_device = "/dev/ttyS4";
+string ttyName = "/dev/ttyS4";
 
 // Parse state is per line
-enum ParseState { Start, EmptyLine, Data, CRC }
+enum ParseState {
+    Start,
+    EmptyLine,
+    Data,
+    CRC
+}
 
-void main()
-{
-	writeln("COSEM Smart meter decoder");
+void main() {
+
+    writeln("COSEM Smart meter decoder");
     writeln("©2022 Jaap Geurts");
 
-    string telegram = readText("esmr50telegram.txt");
-    auto parseTree1 = IEC62056(telegram);
-    writeln(parseTree1);
+    DSerial serialPort = new DSerial(ttyName, 115200);
+    serialPort.setBlockingMode(DSerial.BlockingMode.TimedImmediately);
+    serialPort.setTimeout(200); // 200 millis
+    serialPort.open();
 
+    while (true) {
+
+        //string telegram = readText("esmr50telegram.txt");
+        string telegram = readline(serialPort);
+        auto parseTree1 = IEC62056(telegram);
+        //writeln(parseTree1);
+
+        foreach (ref child; parseTree1.children[0]) {
+            if (child.name == "IEC62056.line") {
+                if (child.matches[0] == "1-0:1.8.1") {
+                    writeln(child.matches[1], child.matches[2]);
+                }
+            }
+        }
+
+    }
+}
+
+private string readline(DSerial serial) {
+
+    auto strBuilder = appender!string;
+    strBuilder.reserve(1024);
+
+    ubyte c;
+
+    while (serial.read(c) == 1) {
+        if (c == '/') {
+            strBuilder.put(c);
+        }
+        if (c == '!')
+            break;
+    }
+    return strBuilder.data;
 }
 
 // OBIS parseOBIS(string section) {
@@ -59,5 +101,3 @@ void main()
 //       throw new ParseException();
 //   obis.channel = to!int(section[2..3]);
 // }
-
-
