@@ -1,6 +1,7 @@
 import std.stdio;
 import std.conv;
 import std.array;
+import std.datetime.systime : SysTime, Clock;
 
 import std.file : readText;
 
@@ -64,16 +65,23 @@ void main() {
         //string telegram = readText("esmr50telegram.txt");
         string telegram = readline(serialPort);
         auto parseTree1 = IEC62056(telegram);
-        //writeln(parseTree1);
+//        writeln(telegram);
+//        writeln(parseTree1);
 
+        float totalPower;
+        int currentPower;
         foreach (ref child; parseTree1.children[0]) {
             if (child.name == "IEC62056.line") {
                 if (child.matches[0] == "1-0:1.8.1") {
-                    writeln(child.matches[1], child.matches[2]);
+                    totalPower = to!float(child.matches[1]);
+                }
+                if (child.matches[0] == "1-0:1.7.0") {
+                    currentPower = to!int(to!float(child.matches[1]) * 1000);
                 }
             }
         }
-
+        SysTime currentTime = Clock.currTime();
+        writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
     }
 }
 
@@ -83,11 +91,13 @@ private string readline(DSerial serial) {
     strBuilder.reserve(1024);
 
     ubyte c;
-
+    bool started = false;
     while (serial.read(c) == 1) {
         if (c == '/') {
-            strBuilder.put(c);
+            started = true;
         }
+        if (started)
+          strBuilder.put(c);
         if (c == '!')
             break;
     }
