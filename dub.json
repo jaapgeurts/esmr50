@@ -4,7 +4,12 @@
 	],
 	"copyright": "Copyright © 2022, Jaap Geurts",
 	"dependencies": {
-		"pegged": "~>0.4.6"
+		"dserial": "~>0.0.1",
+		"pegged": "~>0.4.6",
+        "paho-mqttd": {
+            "version": "~master",
+            "path": "/home/jaapg/projects/paho.mqtt.d"
+        }
 	},
 	"description": "A test applicatin to read esmr50 message",
 	"license": "proprietary",

@@ -1,6 +1,8 @@
 {
 	"fileVersion": 1,
 	"versions": {
+		"dserial": "0.0.1",
+		"paho-mqttd": "0.1.0",
 		"pegged": "0.4.6"
 	}
 }
