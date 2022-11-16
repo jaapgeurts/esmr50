@@ -8,7 +8,7 @@
 		"pegged": "~>0.4.6",
         "paho-mqttd": {
             "version": "~master",
-            "path": "/home/jaapg/projects/paho.mqtt.d"
+            "path": "/home/jaapg/home_automation/controller/software/libs/paho.mqtt.d"
         }
 	},
 	"description": "A test applicatin to read esmr50 message",

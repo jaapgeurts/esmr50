@@ -2,7 +2,7 @@
 	"fileVersion": 1,
 	"versions": {
 		"dserial": "0.0.1",
-		"paho-mqttd": {"path":"../../../../paho.mqtt.d"},
+		"paho-mqttd": {"path":"../../../home_automation/controller/software/libs/paho.mqtt.d"},
 		"pegged": "0.4.6"
 	}
 }

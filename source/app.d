@@ -141,12 +141,13 @@ int main() {
             token = client.publish(TOPIC_GAS_TOTAL, format("%f", totalGas), 1, true);
             token.waitForCompletion();
             oldGas = totalGas;
+
+            token = client.publish(TOPIC_GAS_TODAY, format("%f%s", totalGas - dailyGas, "m3"), 1, true);
+            token.waitForCompletion();
         }
 
         SysTime currentTime = Clock.currTime();
         if (currentTime.hour == 0 && currentTime.minute == 0 && currentTime.second == 0) {
-            token = client.publish(TOPIC_GAS_TODAY, format("%f%s", totalGas - dailyGas, "m3"), 1, true);
-            token.waitForCompletion();
             dailyGas = totalGas;
         }
         // writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
