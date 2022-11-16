@@ -22,8 +22,7 @@ private immutable TOPIC_ELECTRICITY_TOTAL_PEAK = "energy/electricity/totalpeak";
 private immutable TOPIC_ELECTRICITY_TOTAL_OFF = "energy/electricity/totaloff";
 private immutable TOPIC_ELECTRICITY_CURRENT = "energy/electricity/current";
 private immutable TOPIC_GAS_TOTAL = "energy/gas/total";
-private immutable TOPIC_GAS_CURRENT = "energy/gas/current";
-
+private immutable TOPIC_GAS_TODAY = "energy/gas/today";
 
 /* 
  * Description: Application to read ESMR-5 messages from smart energy meter
@@ -82,7 +81,7 @@ int main() {
         return 1;
     }
 
-    opt = new MqttConnectOptions("NhaMinh","ValleStap74#");
+    opt = new MqttConnectOptions("NhaMinh", "ValleStap74#");
     opt.getOptionsPtr().automaticReconnect = true;
 
     try {
@@ -99,6 +98,8 @@ int main() {
     serialPort.setTimeout(200); // 200 millis
     serialPort.open();
 
+    float dailyGas = 3622;
+
     while (true) {
 
         //string telegram = readText("esmr50telegram.txt");
@@ -110,7 +111,7 @@ int main() {
             break;
         }
 
-        float totalPower,totalGas;
+        float totalPower, totalGas;
         int currentPower;
         foreach (ref child; parseTree1.children[0]) {
             if (child.name == "IEC62056.line") {
@@ -125,15 +126,22 @@ int main() {
                 }
             }
         }
-        // SysTime currentTime = Clock.currTime();
+
+        MqttDeliveryToken token = client.publish(TOPIC_ELECTRICITY_CURRENT, format("%d%s", currentPower, "W"), 1, true);
+        token.waitForCompletion();
+        token = client.publish(TOPIC_ELECTRICITY_TOTAL_PEAK, format("%f%s", totalPower, "kWh"), 1, true);
+        token.waitForCompletion();
+        token = client.publish(TOPIC_GAS_TOTAL, format("%f%s", totalGas, "m3"), 1, true);
+        token.waitForCompletion();
+
+        SysTime currentTime = Clock.currTime();
+        if (currentTime.hour == 0 && currentTime.minute == 0 && currentTime.second == 0) {
+            token = client.publish(TOPIC_GAS_TODAY, format("%f%s", totalGas - dailyGas, "m3"), 1, true);
+            token.waitForCompletion();
+            dailyGas = totalGas;
+        }
         // writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
 
-        MqttDeliveryToken token = client.publish(TOPIC_ELECTRICITY_CURRENT, format("%d%s",currentPower,"W"), 1, true);
-        token.waitForCompletion();
-        token = client.publish(TOPIC_ELECTRICITY_TOTAL_PEAK, format("%f%s",totalPower,"kWh"), 1, true);
-        token.waitForCompletion();
-        token = client.publish(TOPIC_GAS_TOTAL, format("%f%s",totalGas,"m3"), 1, true);
-        token.waitForCompletion();
     }
     serialPort.close();
     return 1;
@@ -151,11 +159,11 @@ private string readline(DSerial serial) {
             started = true;
         }
         if (started)
-          strBuilder.put(c);
+            strBuilder.put(c);
         if (c == '!')
             break;
     }
-    for(int i=0;i<6;i++) {
+    for (int i = 0; i < 6; i++) {
         serial.read(c);
         strBuilder.put(c);
     }
