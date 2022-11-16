@@ -18,8 +18,8 @@ import MqttException : MqttException;
 import Callback;
 import ActionListener;
 
-private immutable TOPIC_ELECTRICITY_TOTAL_PEAK = "energy/electricity/totalpeak";
-private immutable TOPIC_ELECTRICITY_TOTAL_OFF = "energy/electricity/totaloff";
+private immutable TOPIC_ELECTRICITY_TOTAL_HIGH = "energy/electricity/totalhigh";
+private immutable TOPIC_ELECTRICITY_TOTAL_LOW = "energy/electricity/totallow";
 private immutable TOPIC_ELECTRICITY_CURRENT = "energy/electricity/current";
 private immutable TOPIC_GAS_TOTAL = "energy/gas/total";
 private immutable TOPIC_GAS_TODAY = "energy/gas/today";
@@ -74,8 +74,7 @@ int main() {
     writeln("©2022 Jaap Geurts");
 
     // setup mqtt
-    string serverURI = "tcp://192.168.20.251:8883";
-    client = new MqttAsyncClient(serverURI, "energylogger");
+    client = new MqttAsyncClient("localhost", "energylogger");
     if (!client.isOK()) {
         stderr.writeln("Error creating MQTT client.");
         return 1;
@@ -99,6 +98,7 @@ int main() {
     serialPort.open();
 
     float dailyGas = 3622;
+    float oldGas;
 
     while (true) {
 
@@ -108,31 +108,40 @@ int main() {
         if (!parseTree1.successful) {
             writeln(telegram);
             writeln(parseTree1);
-            break;
+            continue;
         }
 
-        float totalPower, totalGas;
+        float totalGas, totalPowerHigh, totalPowerLow;
         int currentPower;
         foreach (ref child; parseTree1.children[0]) {
             if (child.name == "IEC62056.line") {
                 if (child.matches[0] == "1-0:1.8.1") {
-                    totalPower = to!float(child.matches[1]);
+                    totalPowerLow = to!float(child.matches[1]);
                 }
-                if (child.matches[0] == "1-0:1.7.0") {
+                else if (child.matches[0] == "1-0:1.8.2") {
+                    totalPowerHigh = to!float(child.matches[1]);
+                }
+                else if (child.matches[0] == "1-0:1.7.0") {
                     currentPower = to!int(to!float(child.matches[1]) * 1000);
                 }
-                if (child.matches[0] == "0-1:24.2.1") {
+                else if (child.matches[0] == "0-1:24.2.1") {
                     totalGas = to!float(child.matches[2]);
                 }
             }
         }
 
-        MqttDeliveryToken token = client.publish(TOPIC_ELECTRICITY_CURRENT, format("%d%s", currentPower, "W"), 1, true);
+        MqttDeliveryToken token = client.publish(TOPIC_ELECTRICITY_CURRENT, format("%d", currentPower), 1, true);
         token.waitForCompletion();
-        token = client.publish(TOPIC_ELECTRICITY_TOTAL_PEAK, format("%f%s", totalPower, "kWh"), 1, true);
+        token = client.publish(TOPIC_ELECTRICITY_TOTAL_HIGH, format("%f", totalPowerHigh), 1, true);
         token.waitForCompletion();
-        token = client.publish(TOPIC_GAS_TOTAL, format("%f%s", totalGas, "m3"), 1, true);
+        token = client.publish(TOPIC_ELECTRICITY_TOTAL_LOW, format("%f", totalPowerLow), 1, true);
         token.waitForCompletion();
+
+        if (totalGas != oldGas) {
+            token = client.publish(TOPIC_GAS_TOTAL, format("%f", totalGas), 1, true);
+            token.waitForCompletion();
+            oldGas = totalGas;
+        }
 
         SysTime currentTime = Clock.currTime();
         if (currentTime.hour == 0 && currentTime.minute == 0 && currentTime.second == 0) {
@@ -143,8 +152,8 @@ int main() {
         // writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
 
     }
-    serialPort.close();
-    return 1;
+    //    serialPort.close();
+    //    return 1;
 }
 
 private string readline(DSerial serial) {
