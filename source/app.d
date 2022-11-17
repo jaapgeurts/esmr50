@@ -149,6 +149,8 @@ int main() {
         SysTime currentTime = Clock.currTime();
         if (currentTime.hour == 0 && currentTime.minute == 0 && currentTime.second == 0) {
             dailyGas = totalGas;
+            token = client.publish(TOPIC_GAS_TODAY, format("%f%s", totalGas - dailyGas, "m3"), 1, true);
+            token.waitForCompletion();
         }
         // writeln(currentTime.toSimpleString(),": ",totalPower,"kWh, ",currentPower,"W");
 
